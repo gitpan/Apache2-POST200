@@ -12,8 +12,6 @@ use DBD::SQLite;
 plan tests=>20, have_module qw(mod_rewrite mod_proxy mod_proxy_http);
 
 my $serverroot=Apache::Test::vars->{serverroot};
-my $hostport = Apache::TestRequest::hostport() || '';
-t_debug("connecting to $hostport");
 
 my ($db,$user,$pw)=@ENV{qw/DB USER PW/};
 unless( defined $db and length $db ) {
@@ -44,12 +42,16 @@ sub n {my @c=caller; $c[1].'('.$c[2].'): '.$_[0];}
 ######################################################################
 
 Apache::TestRequest::module('Backend');
+t_debug("connecting to ".Apache::TestRequest::hostport);
 
+t_debug "POST ".Apache::TestRequest::module2url('Backend', {path=>'/mp/method'});
 my $resp=POST '/mp/method';
 ok t_cmp $resp->code, 200, n 'Backend return 200 on POST';
 
 Apache::TestRequest::module('default');
+t_debug("connecting to ".(my $hostport=Apache::TestRequest::hostport));
 
+t_debug "POST ".Apache::TestRequest::module2url('default', {path=>'/proxy/mp/method'});
 $resp=GET '/proxy/mp/method';
 ok t_cmp $resp->code, 200, n 'GET => 200';
 ok t_cmp $resp->content, 'GET:', n 'GET content=GET';

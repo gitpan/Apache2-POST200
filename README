@@ -51,7 +51,7 @@ SYNOPSIS
         </Location>
 
         # defined a prefix instead of "-redirect-"
-        POST200Location -localhost-8080-
+        POST200Label -localhost-8080-
 
         RewriteEngine On
 

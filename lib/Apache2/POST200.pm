@@ -28,7 +28,7 @@ use Digest::MD5 ();
 use Digest::CRC ();
 use DBI;
 
-our $VERSION = '0.03';
+our $VERSION = '0.05';
 my $rcounter=0;
 
 # these 2 values were once read from /dev/random on my box
@@ -109,14 +109,16 @@ my %extra_config=
      map {
        if( /^hex:(.+)/ ) {
 	 $_=pack( 'H*', $_ );
-	 $_=substr( $_, 0, 56 ) if( length($_)>56 );
        } elsif( /^b64:(.+)/ ) {
 	 $_=MIME::Base64::decode_base64( $_ );
-	 $_=substr( $_, 0, 56 ) if( length($_)>56 );
        } else {
 	 $_=Digest::MD5::md5( $_ );
        }
+       $_.=$_ while( length($_)<56 );
+       $_=substr( $_, 0, 56 ) if( length($_)>56 );
      } @{$_[0]};
+     $_[1]=substr( $_[1], 0, 8 );
+     @{$_[0]};
    },
   );
 
@@ -154,11 +156,14 @@ sub Response {
     unless( $r->method_number==Apache2::Const::M_GET and
 	    length( $r->args )==32+length($cf->{location}->[0]) );
 
-  my $crypt=Crypt::CBC->new( {key=>$cf->{secret}->[0],
-			      cipher=>'Blowfish',
-			      iv=>$cf->{secret}->[1],
-			      regenerate_key=>0,
-			      prepend_iv=>0} );
+  my $crypt=Crypt::CBC->new(
+			    -key=>$cf->{secret}->[0],
+			    -keysize=>length($cf->{secret}->[0]),
+			    -cipher=>'Crypt::Blowfish',
+			    -literal_key=>1,
+			    -header=>'none',
+			    -iv=>$cf->{secret}->[1],
+			   );
 
   my $session=$r->args;
   $session=~s/^\Q$cf->{location}->[0]\E//;
@@ -269,11 +274,14 @@ sub Filter {
 
     $session=pack( 'C', Digest::CRC::crc8( $session ) ).$session;
 
-    my $crypt=Crypt::CBC->new( {key=>$cf->{secret}->[0],
-				cipher=>'Blowfish',
-				iv=>$cf->{secret}->[1],
-				regenerate_key=>0,
-				prepend_iv=>0} );
+    my $crypt=Crypt::CBC->new(
+			      -key=>$cf->{secret}->[0],
+			      -keysize=>length($cf->{secret}->[0]),
+			      -cipher=>'Crypt::Blowfish',
+			      -literal_key=>1,
+			      -header=>'none',
+			      -iv=>$cf->{secret}->[1],
+			     );
 
     $session=MIME::Base64::encode_base64( $crypt->encrypt( $session ), '' );
 

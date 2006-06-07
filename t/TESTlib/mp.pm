@@ -51,7 +51,7 @@ sub proxy {
   $backend=$backend->server_hostname.':'.$backend->port;
   my $url=$r->uri;
   $url=~s!^/+[^/]+!!;
-  $url="http://$backend/$url";
+  $url="http://$backend$url";
   $r->proxyreq(2);
   $r->filename("proxy:$url");
   $r->handler('proxy-server');

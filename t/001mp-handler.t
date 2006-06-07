@@ -43,12 +43,15 @@ sub n {my @c=caller; $c[1].'('.$c[2].'): '.$_[0];}
 ## the real tests begin here                                        ##
 ######################################################################
 
+t_debug "GET /mp/method";
 my $resp=GET '/mp/method';
 ok t_cmp $resp->code, 200, n 'GET => 200';
 ok t_cmp $resp->content, 'GET:', n 'GET content=GET';
 
+t_debug "POST /mp/method";
 $resp=POST '/mp/method';
 my $loc=$resp->header('Location');
+t_debug "Location: $loc";
 ok t_cmp $resp->code, 302, n 'POST => 302';
 ok t_cmp $loc, qr!\Q$hostport\E/mp/method\?-redirect-[A-Za-z0-9@=-]{32}$!, n 'Location';
 ok t_cmp $dbh->selectall_arrayref
@@ -71,24 +74,29 @@ ok t_cmp $dbh->selectall_arrayref
 	    substr( $loc, -32 ).':00000004')->[0]->[0],
          'POST:', n 'POST result in DB';
 
+t_debug "follow redirect: GET $loc";
 $resp=GET $loc;
 ok t_cmp $resp->content, 'POST:', n 'POST content=POST';
 ok t_cmp $resp->header('X-My-Header'), 'hallo opi', n 'response header';
 ok t_cmp $resp->header('X-My-Error'), 'error', n 'response error header';
 ok t_cmp $resp->content_type, 'text/slain', n 'response content-type';
 
+t_debug "GET $loc;nocheck";
 $resp=GET $loc.';nocheck';
 ok t_cmp $resp->code, 200, n 'POST200IpCheck Off: code 200';
 ok t_cmp $resp->content, 'POST:', n 'POST200IpCheck Off: content';
 
 t_client_log_error_is_expected;
+t_debug "GET $loc;check";
 $resp=GET $loc.';check';
 ok t_cmp $resp->code, 404, n 'POST200IpCheck On: code 404';
 
 t_client_log_error_is_expected;
+t_debug "GET $loc;default";
 $resp=GET $loc.';default';
 ok t_cmp $resp->code, 404, n 'POST200IpCheck default: code 404';
 
+t_debug "POST $loc";
 $resp=POST $loc;
 ok t_cmp $resp->code, 302, n 'POST => 302';
 ok t_cmp $resp->header('Location'), qr#^(?!\Q$loc\E)#, n 'Location ne '.$loc;
@@ -98,6 +106,7 @@ ok t_cmp $dbh->selectall_arrayref
 	    substr( $resp->header('Location'), -32 ).':00000004')->[0]->[0],
          'POST:', n 'POST result in DB';
 
+t_debug "follow redirect: GET ".$resp->header('Location');
 ok t_cmp GET($resp->header('Location'))->content, 'POST:', n 'POST content=POST';
 
 $resp=POST '/mp/chunks';

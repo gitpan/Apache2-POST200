@@ -30,8 +30,10 @@ PerlOutputFilterHandler Apache2::POST200::Filter
   PerlResponseHandler Apache2::POST200::Response
 </Location>
 
-<IfModule rewrite_module>
+<IfModule mod_rewrite.c>
   RewriteEngine On
+  #RewriteLog "rewrite_log"
+  #RewriteLogLevel 5
 
   # redirect GET/HEAD requests with a matching QUERY_STRING to
   # Apache2::POST200::Response
@@ -89,16 +91,14 @@ PerlModule TESTlib::mp
   PerlResponseHandler TESTlib::mp::big
 </Location>
 
-<IfModule proxy_module>
-  <IfModule proxy_http_module>
-    <Location "/proxy">
-      PerlFixupHandler TESTlib::mp::proxy
-    </Location>
-  </IfModule>
+<IfModule mod_proxy.c>
+  <Location "/proxy">
+    PerlFixupHandler TESTlib::mp::proxy
+  </Location>
 </IfModule>
 
-<IfModule cgi_module>
-  <IfModule </IfModule>>
+<IfModule mod_cgi.c>
+  <IfModule mod_env.c>
     PassEnv PERL5LIB
   </IfModule>
   <Location "/cgi">
@@ -125,8 +125,8 @@ PerlModule TESTlib::mp
     PerlResponseHandler TESTlib::mp::big
   </Location>
 
-  <IfModule cgi_module>
-    <IfModule </IfModule>>
+  <IfModule mod_cgi.c>
+    <IfModule mod_env.c>
       PassEnv PERL5LIB
     </IfModule>
     <Location "/cgi">

@@ -53,7 +53,7 @@ Apache2::POST200 - Converting code 200 responses to POST requests to 302
     </Location>
 
     # defined a prefix instead of "-redirect-"
-    POST200Location -localhost-8080-
+    POST200Label -localhost-8080-
 
     RewriteEngine On
 
